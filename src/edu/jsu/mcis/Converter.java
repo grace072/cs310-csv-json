@@ -41,6 +41,7 @@ public class Converter {
                     [973,236,237,500]
             ]
         }
+    //java hashmap 
     
         Your task for this program is to complete the two conversion methods in
         this class, "csvToJson()" and "jsonToCsv()", so that the CSV data shown
@@ -58,8 +59,11 @@ public class Converter {
     
     @SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
-        
-        String results = "";
+
+        HashMap<String, JSONArray> jsonData = new HashMap<>();
+        JSONArray colHeaders = new JSONArray();
+        JSONArray rowHeaders = new JSONArray();
+        JSONArray dataArray = new JSONArray();
         
         try {
             
@@ -68,11 +72,38 @@ public class Converter {
             Iterator<String[]> iterator = full.iterator();
             
             // INSERT YOUR CODE HERE
+
+            String[] colHeader = iterator.next();// full.get(0)
+
+            for (int i = 0; i < colHeader.length; i++) {
+                String s = colHeader[i];
+                colHeaders.add(s); //
+                
+            }
             
+
+            while (iterator.hasNext()) { 
+                String[] nextLine = iterator.next(); //from col2~
+               
+                 
+                rowHeaders.add(nextLine[0]);
+                Long[] data = new Long[nextLine.length - 1]; 
+                for (int i = 1; i < nextLine.length; i++) { 
+
+                    data[i - 1] = Long.parseLong(nextLine[i]);
+                }
+                dataArray.add(data);
+
+            }
+            
+            
+            jsonData.put("colHeaders", colHeaders);
+            jsonData.put("rowHeaders", rowHeaders);
+            jsonData.put("data", dataArray);
         }        
         catch(Exception e) { return e.toString(); }
         
-        return results.trim();
+        return jsonData.toString().trim();
         
     }
     
@@ -87,12 +118,37 @@ public class Converter {
             
             // INSERT YOUR CODE HERE
             
+            JSONParser parser = new JSONParser();
+            JSONObject json = (JSONObject) parser.parse(jsonString);
+
+            JSONArray  colHeaders = (JSONArray) json.get("colHeaders");
+            JSONArray rowHeaders = (JSONArray) json.get("rowHeaders");
+            JSONArray data = (JSONArray) json.get("data");
+            
+            String[] colHeadersLine = new String[colHeaders.size()];
+            for (int i = 0; i < colHeaders.size(); i++) {
+                colHeadersLine[i] = (String) colHeaders.get(i);
+            }
+            csvWriter.writeNext(colHeadersLine);
+                       
+            for (int i = 0; i < rowHeaders.size(); i++) {
+                String row = (String) rowHeaders.get(i);
+                JSONArray dataArray = (JSONArray) data.get(i);
+                String[] nextLine = new String[dataArray.size() + 1];
+                
+                nextLine[0] = row;
+                
+
+                for (int j = 1; j < nextLine.length; j++) {
+                    nextLine[j] = String.valueOf((Long) dataArray.get(j - 1));
+                }
+                csvWriter.writeNext(nextLine);
+            }
+            results = writer.toString(); 
+        } catch(Exception e) {
+            return e.toString();
         }
-        
-        catch(Exception e) { return e.toString(); }
-        
-        return results.trim();
-        
+        return results;
     }
 
 }
